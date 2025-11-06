@@ -69,12 +69,12 @@ export async function generateVisualsForLyrics(
 
   let generatedPrompts: {stanza: string; prompt: string}[];
   try {
-    // FIX: The `.text` member of the response is a function, not a property. Calling it to get the text content.
-    const jsonText = promptResponse.text().replace(/^```json\n/, '').replace(/\n```$/, '');
+    // FIX: The `.text` member of the response is a property, not a function. Accessing it directly to get the text content.
+    const jsonText = promptResponse.text.replace(/^```json\n/, '').replace(/\n```$/, '');
     generatedPrompts = JSON.parse(jsonText);
   } catch (e) {
-    // FIX: The `.text` member of the response is a function, not a property. Calling it to get the text content for the error message.
-    const responseText = typeof promptResponse.text === 'function' ? promptResponse.text() : String(promptResponse.text);
+    // FIX: The `.text` member of the response is a property, not a function. Accessing it directly for the error message.
+    const responseText = promptResponse.text;
     console.error("Failed to parse prompts JSON:", responseText, e);
     throw new Error(`AI failed to generate prompts in the correct format. Raw response: "${responseText}"`);
   }
