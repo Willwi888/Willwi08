@@ -128,25 +128,53 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ timedLyrics, audioUrl, imageU
     };
   }, [isPlaying]);
   
-  const lyricLines = useMemo(() => {
-    const currentIndex = timedLyrics.findIndex(lyric => currentTime >= lyric.startTime && currentTime < lyric.endTime);
-    if (currentIndex === -1) {
-      if (currentTime < (timedLyrics[0]?.startTime || 0)) {
-         return { prev: null, current: null, next: timedLyrics[0] || null };
-      }
-      const lastLyric = timedLyrics[timedLyrics.length -1];
-      if (lastLyric?.text === 'END' && currentTime >= lastLyric.startTime) {
-         return { prev: timedLyrics[timedLyrics.length - 2] || null, current: lastLyric, next: null};
-      }
-      return { prev: timedLyrics[timedLyrics.length-1] || null, current: null, next: null };
+ const lyricLines = useMemo(() => {
+    const realLyrics = timedLyrics.filter(l => l.text.trim() !== '');
+    if (realLyrics.length === 0) {
+      return { prev: null, current: null, next: null };
+    }
+
+    const currentIndex = realLyrics.findIndex(lyric => currentTime >= lyric.startTime && currentTime < lyric.endTime);
+
+    // Before the first lyric
+    if (currentTime < realLyrics[0].startTime) {
+      return { prev: null, current: null, next: realLyrics[0] };
+    }
+
+    // After the last lyric
+    const lastLyric = realLyrics[realLyrics.length - 1];
+    if (currentTime >= lastLyric.endTime) {
+      return { prev: lastLyric, current: null, next: null };
+    }
+
+    // During a lyric
+    if (currentIndex !== -1) {
+      return {
+        prev: realLyrics[currentIndex - 1] || null,
+        current: realLyrics[currentIndex],
+        next: realLyrics[currentIndex + 1] || null,
+      };
     }
     
-    return {
-      prev: timedLyrics[currentIndex - 1] || null,
-      current: timedLyrics[currentIndex],
-      next: timedLyrics[currentIndex + 1] || null,
-    };
+    // In a gap between lyrics
+    let prevLyricIndex = -1;
+    for(let i = realLyrics.length - 1; i >= 0; i--) {
+        if(currentTime >= realLyrics[i].endTime) {
+            prevLyricIndex = i;
+            break;
+        }
+    }
+    if (prevLyricIndex !== -1) {
+        return {
+            prev: realLyrics[prevLyricIndex],
+            current: null,
+            next: realLyrics[prevLyricIndex + 1] || null,
+        }
+    }
+
+    return { prev: null, current: null, next: null };
   }, [currentTime, timedLyrics]);
+
 
   const handlePlayPause = () => {
     if (audioRef.current) {
@@ -234,7 +262,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ timedLyrics, audioUrl, imageU
                               {lyricLines.prev?.text || ' '}
                           </p>
 
-                          {lyricLines.current && lyricLines.current.text !== 'END' ? (
+                          {lyricLines.current ? (
                             <KaraokeLyric
                               key={lyricLines.current.startTime}
                               text={lyricLines.current.text}
@@ -248,14 +276,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ timedLyrics, audioUrl, imageU
                             <p 
                               className={baseLyricClass}
                               style={{ fontSize: `${fontSize}px`, fontFamily: fontFamily, minHeight: `${fontSize * 1.2}px` }}>
-                                {lyricLines.current?.text === 'END' ? '' : (lyricLines.current?.text || ' ')}
+                                {' '}
                             </p>
                            )}
 
                           <p 
-                            className={`transition-opacity duration-300 ${baseLyricClass} ${lyricLines.next && lyricLines.next.text !== 'END' ? 'opacity-70 text-gray-300' : 'opacity-0'}`}
+                            className={`transition-opacity duration-300 ${baseLyricClass} ${lyricLines.next ? 'opacity-70 text-gray-300' : 'opacity-0'}`}
                               style={{ fontSize: `${fontSize * 0.6}px`, fontFamily: fontFamily, }}>
-                              {lyricLines.next?.text === 'END' ? '' : (lyricLines.next?.text || ' ')}
+                              {lyricLines.next?.text || ' '}
                           </p>
                         </div>
                     </div>

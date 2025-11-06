@@ -69,13 +69,14 @@ export async function generateVisualsForLyrics(
 
   let generatedPrompts: {stanza: string; prompt: string}[];
   try {
-    // FIX: The `text` property on `GenerateContentResponse` is a get accessor, not a function.
-    const jsonText = promptResponse.text.replace(/^```json\n/, '').replace(/\n```$/, '');
+    // FIX: The `.text` member of the response is a function, not a property. Calling it to get the text content.
+    const jsonText = promptResponse.text().replace(/^```json\n/, '').replace(/\n```$/, '');
     generatedPrompts = JSON.parse(jsonText);
   } catch (e) {
-    // FIX: The `text` property on `GenerateContentResponse` is a get accessor, not a function.
-    console.error("Failed to parse prompts JSON:", promptResponse.text, e);
-    throw new Error("AI failed to generate prompts in the correct format.");
+    // FIX: The `.text` member of the response is a function, not a property. Calling it to get the text content for the error message.
+    const responseText = typeof promptResponse.text === 'function' ? promptResponse.text() : String(promptResponse.text);
+    console.error("Failed to parse prompts JSON:", responseText, e);
+    throw new Error(`AI failed to generate prompts in the correct format. Raw response: "${responseText}"`);
   }
   
   const tasks: ImageGenerationTask[] = stanzas.map((stanza) => {

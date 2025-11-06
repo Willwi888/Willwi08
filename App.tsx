@@ -4,7 +4,6 @@ import VideoPlayer from './components/VideoPlayer';
 import MusicIcon from './components/icons/MusicIcon';
 import ImageIcon from './components/icons/ImageIcon';
 import SrtIcon from './components/icons/SrtIcon';
-import WillWiMusicLogo from './components/icons/WillWiMusicLogo';
 import { TimedLyric } from './types';
 import SparklesIcon from './components/icons/SparklesIcon';
 import InfoIcon from './components/icons/InfoIcon';
@@ -108,16 +107,12 @@ const App: React.FC = () => {
     const firstLyricStartTime = lyrics[0].startTime;
     const processedLyrics: TimedLyric[] = [];
 
+    // If the first lyric doesn't start at the beginning, add a silent intro period.
     if (firstLyricStartTime > 0.1) {
         processedLyrics.push({ text: '', startTime: 0, endTime: firstLyricStartTime });
     }
 
     processedLyrics.push(...lyrics);
-
-    const lastLyricEndTime = lyrics[lyrics.length - 1].endTime;
-    if (duration > lastLyricEndTime) {
-       processedLyrics.push({ text: 'END', startTime: lastLyricEndTime, endTime: duration });
-    }
 
     setTimedLyrics(processedLyrics);
     setAudioDuration(duration);
@@ -368,7 +363,6 @@ const App: React.FC = () => {
 
   return (
     <main className="relative w-full h-screen flex items-center justify-center p-4 overflow-hidden">
-      <WillWiMusicLogo />
       {!showSplash && <div className="absolute inset-0 bg-black/80" />}
       <div className="relative z-10 w-full h-full flex items-center justify-center">
         {renderContent()}
